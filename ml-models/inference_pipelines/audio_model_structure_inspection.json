@@ -1,0 +1,14 @@
+{
+    "model_path": "/content/drive/MyDrive/Multimodal_Fake_Content_Detection/models/audio/phase_9_dedicated_audio_model/phase_9_6_final_freeze/audio_cnn_final_frozen.pt",
+    "checkpoint_type": "<class 'dict'>",
+    "checkpoint_is_dictionary": true,
+    "state_dict_detected": true,
+    "state_dict_source": "model_state_dict",
+    "state_dict_tensor_count": 30,
+    "metadata_found": {
+        "model_name": "AudioCNN",
+        "sample_rate": "16000",
+        "n_mels": "128",
+        "input_shape": "[1, 128, 251]"
+    }
+}

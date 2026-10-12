@@ -1,0 +1,15 @@
+{
+    "phase": "6.4",
+    "step": "3",
+    "status": "completed",
+    "audio_architecture": "Audio -> Whisper -> Transcript -> RoBERTa",
+    "text_model_path": "/content/drive/MyDrive/Multimodal_Fake_Content_Detection/models/text/roberta_base_final",
+    "text_engine_class": "TextInferenceEngine",
+    "text_prediction_method": "predict",
+    "audio_pipeline_path": "/content/drive/MyDrive/Multimodal_Fake_Content_Detection/deployment/inference_pipelines/audio_inference.py",
+    "prediction_type": "content_authenticity",
+    "labels": [
+        "real",
+        "fake"
+    ]
+}

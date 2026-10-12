@@ -1,0 +1,51 @@
+# Environment variables / API keys
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Python cache
+.pytest_cache/
+.mypy_cache/
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+build/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+
+# Runtime folders
+uploads/
+temp/
+tmp/
+
+# Large trained ML model files
+*.safetensors
+*.pth
+
+# Windows shortcut files
+*.lnk

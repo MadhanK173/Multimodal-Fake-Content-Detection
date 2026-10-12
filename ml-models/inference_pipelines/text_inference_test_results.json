@@ -1,0 +1,47 @@
+[
+    {
+        "test_name": "Test 1 \u2014 Short Text",
+        "input_text": "Artificial intelligence is transforming the way people interact with technology.",
+        "result": {
+            "prediction": "label_1",
+            "confidence": 0.9755938053131104,
+            "confidence_percent": 97.56,
+            "probabilities": {
+                "label_0": 2.4406,
+                "label_1": 97.5594
+            },
+            "model": "RoBERTa",
+            "modality": "text"
+        }
+    },
+    {
+        "test_name": "Test 2 \u2014 Natural Writing",
+        "input_text": "I went to the market yesterday evening and met an old friend unexpectedly. We talked for almost an hour about our college days.",
+        "result": {
+            "prediction": "label_1",
+            "confidence": 0.6319265961647034,
+            "confidence_percent": 63.19,
+            "probabilities": {
+                "label_0": 36.8073,
+                "label_1": 63.1927
+            },
+            "model": "RoBERTa",
+            "modality": "text"
+        }
+    },
+    {
+        "test_name": "Test 3 \u2014 Formal Content",
+        "input_text": "The rapid development of artificial intelligence has created significant opportunities and challenges for modern society.",
+        "result": {
+            "prediction": "label_0",
+            "confidence": 0.731273353099823,
+            "confidence_percent": 73.13,
+            "probabilities": {
+                "label_0": 73.1273,
+                "label_1": 26.8727
+            },
+            "model": "RoBERTa",
+            "modality": "text"
+        }
+    }
+]

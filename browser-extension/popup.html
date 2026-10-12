@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <!-- =====================================================
+       BASIC META
+  ====================================================== -->
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+
+  <!-- =====================================================
+       PAGE TITLE
+  ====================================================== -->
+
+  <title>
+    Multimodal Fake Content Detector
+  </title>
+
+
+  <!-- =====================================================
+       STYLESHEET
+  ====================================================== -->
+
+  <link
+    rel="stylesheet"
+    href="popup.css"
+  >
+
+</head>
+
+
+<body>
+
+  <!-- =====================================================
+       MAIN EXTENSION CONTAINER
+  ====================================================== -->
+
+  <div class="extension">
+
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="header">
+
+      <div class="brand">
+
+        <div
+          class="brand-icon"
+          aria-hidden="true"
+        >
+          ◆
+        </div>
+
+
+        <div>
+
+          <h1>
+            Fake Content Detector
+          </h1>
+
+          <p>
+            Multimodal AI Analysis
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           BACKEND STATUS
+      ================================================== -->
+
+      <div
+        id="backendStatus"
+        class="status offline"
+        aria-live="polite"
+      >
+
+        <span
+          class="status-dot"
+          aria-hidden="true"
+        ></span>
+
+        Backend Offline
+
+      </div>
+
+    </header>
+
+
+
+    <!-- =====================================================
+         MODE TABS
+    ====================================================== -->
+
+    <div
+      class="mode-tabs"
+      role="tablist"
+      aria-label="Detection modes"
+    >
+
+
+      <!-- TEXT TAB -->
+
+      <button
+        id="textModeButton"
+        class="mode-tab active"
+        type="button"
+        role="tab"
+        aria-selected="true"
+        aria-controls="textMode"
+      >
+        Text
+      </button>
+
+
+      <!-- IMAGE TAB -->
+
+      <button
+        id="imageModeButton"
+        class="mode-tab"
+        type="button"
+        role="tab"
+        aria-selected="false"
+        aria-controls="imageMode"
+      >
+        Image
+      </button>
+
+
+      <!-- AUDIO TAB -->
+
+      <button
+        id="audioModeButton"
+        class="mode-tab"
+        type="button"
+        role="tab"
+        aria-selected="false"
+        aria-controls="audioMode"
+      >
+        Audio
+      </button>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         CURRENT PAGE SOURCE
+    ====================================================== -->
+
+    <section class="source-card">
+
+      <div class="section-label">
+        CURRENT SOURCE
+      </div>
+
+
+      <!-- PAGE TITLE -->
+
+      <div
+        id="pageTitle"
+        class="page-title"
+      >
+        Detecting page...
+      </div>
+
+
+      <!-- PAGE URL -->
+
+      <div
+        id="pageUrl"
+        class="page-url"
+        title=""
+      >
+        —
+      </div>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         TEXT MODE
+    ====================================================== -->
+
+    <section
+      id="textMode"
+      role="tabpanel"
+    >
+
+
+      <!-- ===================================================
+           TEXT ACTION BUTTONS
+      ==================================================== -->
+
+      <section class="actions">
+
+
+        <!-- ANALYZE SELECTED TEXT -->
+
+        <button
+          id="analyzeSelectionButton"
+          class="primary-button"
+          type="button"
+        >
+          Analyze Selected Text
+        </button>
+
+
+        <!-- ANALYZE CURRENT PAGE -->
+
+        <button
+          id="analyzePageButton"
+          class="secondary-button"
+          type="button"
+        >
+          Analyze Current Page
+        </button>
+
+      </section>
+
+
+
+      <!-- ===================================================
+           SELECTED TEXT PREVIEW
+      ==================================================== -->
+
+      <section
+        id="textPreview"
+        class="text-preview hidden"
+      >
+
+        <div class="section-label">
+          TEXT BEING ANALYZED
+        </div>
+
+
+        <div
+          id="textContent"
+          class="text-content"
+        >
+          —
+        </div>
+
+      </section>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         IMAGE MODE
+    ====================================================== -->
+
+    <section
+      id="imageMode"
+      class="hidden"
+      role="tabpanel"
+    >
+
+
+      <!-- ===================================================
+           LOCAL IMAGE UPLOAD
+      ==================================================== -->
+
+      <section
+        id="imageUploadZone"
+        class="image-upload-zone"
+        role="button"
+        tabindex="0"
+        aria-label="Upload an image"
+      >
+
+
+        <!-- IMAGE FILE INPUT -->
+
+        <input
+          id="imageFileInput"
+          type="file"
+          accept=".jpg,.jpeg,.png,.webp,.bmp,.tiff,image/*"
+          hidden
+        >
+
+
+        <!-- UPLOAD ICON -->
+
+        <div
+          class="upload-icon"
+          aria-hidden="true"
+        >
+          IMG
+        </div>
+
+
+        <strong>
+          Upload an image
+        </strong>
+
+
+        <p>
+          Click here to choose an image
+        </p>
+
+
+        <span>
+          JPG, JPEG, PNG, WEBP, BMP, TIFF
+        </span>
+
+      </section>
+
+
+
+      <!-- ===================================================
+           LOCAL IMAGE PREVIEW
+      ==================================================== -->
+
+      <section
+        id="imagePreview"
+        class="image-preview hidden"
+      >
+
+
+        <!-- IMAGE -->
+
+        <img
+          id="selectedImagePreview"
+          alt="Selected image preview"
+        >
+
+
+        <!-- FILE INFORMATION -->
+
+        <div class="image-file-info">
+
+          <strong
+            id="selectedImageName"
+          >
+            —
+          </strong>
+
+
+          <span
+            id="selectedImageSize"
+          >
+            —
+          </span>
+
+        </div>
+
+
+        <!-- REMOVE BUTTON -->
+
+        <button
+          id="removeImageButton"
+          class="remove-button"
+          type="button"
+        >
+          Remove
+        </button>
+
+      </section>
+
+
+
+      <!-- ===================================================
+           ANALYZE UPLOADED IMAGE
+      ==================================================== -->
+
+      <button
+        id="analyzeImageButton"
+        class="primary-button"
+        type="button"
+      >
+        Analyze Uploaded Image
+      </button>
+
+
+
+      <!-- ===================================================
+           CURRENT PAGE IMAGES
+      ==================================================== -->
+
+      <section class="page-images-section">
+
+
+        <div class="section-label">
+          IMAGES ON CURRENT PAGE
+        </div>
+
+
+        <p class="page-images-help">
+          Select an image from this webpage to analyze it.
+        </p>
+
+
+        <!-- DYNAMICALLY GENERATED BY popup.js -->
+
+        <div
+          id="pageImages"
+          class="page-images"
+        >
+
+          <div class="no-images">
+            Loading images...
+          </div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- ===================================================
+           IMAGE ANALYSIS PIPELINE
+      ==================================================== -->
+
+      <section class="image-pipeline">
+
+
+        <div class="section-label">
+          IMAGE ANALYSIS PIPELINE
+        </div>
+
+
+
+        <!-- STEP 1 -->
+
+        <div class="pipeline-item">
+
+          <span>
+            01
+          </span>
+
+
+          <div>
+
+            <strong>
+              Text Only
+            </strong>
+
+
+            <small>
+              OCR → RoBERTa
+            </small>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- STEP 2 -->
+
+        <div class="pipeline-item">
+
+          <span>
+            02
+          </span>
+
+
+          <div>
+
+            <strong>
+              Image Only
+            </strong>
+
+
+            <small>
+              ResNet50
+            </small>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- STEP 3 -->
+
+        <div class="pipeline-item">
+
+          <span>
+            03
+          </span>
+
+
+          <div>
+
+            <strong>
+              Text + Image
+            </strong>
+
+
+            <small>
+              OCR + RoBERTa + ResNet50 + Fusion
+            </small>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         AUDIO MODE
+    ====================================================== -->
+
+    <section
+      id="audioMode"
+      class="hidden"
+      role="tabpanel"
+    >
+
+
+      <!-- ===================================================
+           AUDIO UPLOAD
+      ==================================================== -->
+
+      <section
+        id="audioUploadZone"
+        class="audio-upload-zone"
+        role="button"
+        tabindex="0"
+        aria-label="Upload an audio file"
+      >
+
+
+        <!-- AUDIO FILE INPUT -->
+
+        <input
+          id="audioFileInput"
+          type="file"
+          accept=".mp3,.wav,.m4a,.ogg,.webm,audio/*"
+          hidden
+        >
+
+
+        <!-- AUDIO ICON -->
+
+        <div
+          class="upload-icon audio-upload-icon"
+          aria-hidden="true"
+        >
+          AUD
+        </div>
+
+
+        <strong>
+          Upload an audio file
+        </strong>
+
+
+        <p>
+          Click here to choose audio
+        </p>
+
+
+        <span>
+          MP3, WAV, M4A, OGG, WEBM
+        </span>
+
+      </section>
+
+
+
+      <!-- ===================================================
+           AUDIO PREVIEW
+      ==================================================== -->
+
+      <section
+        id="audioPreview"
+        class="audio-preview hidden"
+      >
+
+
+        <!-- AUDIO PLAYER -->
+
+        <audio
+          id="selectedAudioPreview"
+          controls
+        >
+          Your browser does not support audio playback.
+        </audio>
+
+
+        <!-- AUDIO INFORMATION -->
+
+        <div class="audio-file-info">
+
+          <strong
+            id="selectedAudioName"
+          >
+            —
+          </strong>
+
+
+          <span
+            id="selectedAudioSize"
+          >
+            —
+          </span>
+
+        </div>
+
+
+        <!-- REMOVE BUTTON -->
+
+        <button
+          id="removeAudioButton"
+          class="remove-button"
+          type="button"
+        >
+          Remove
+        </button>
+
+      </section>
+
+
+
+      <!-- ===================================================
+           ANALYZE AUDIO BUTTON
+      ==================================================== -->
+
+      <button
+        id="analyzeAudioButton"
+        class="primary-button"
+        type="button"
+      >
+        Analyze Audio
+      </button>
+
+
+
+      <!-- ===================================================
+           AUDIO PIPELINE
+      ==================================================== -->
+
+      <section class="audio-pipeline">
+
+
+        <div class="section-label">
+          AUDIO ANALYSIS PIPELINE
+        </div>
+
+
+
+        <!-- STEP 1 -->
+
+        <div class="pipeline-item">
+
+          <span>
+            01
+          </span>
+
+
+          <div>
+
+            <strong>
+              Audio
+            </strong>
+
+
+            <small>
+              Input audio file
+            </small>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- STEP 2 -->
+
+        <div class="pipeline-item">
+
+          <span>
+            02
+          </span>
+
+
+          <div>
+
+            <strong>
+              Whisper
+            </strong>
+
+
+            <small>
+              Speech → Text transcription
+            </small>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- STEP 3 -->
+
+        <div class="pipeline-item">
+
+          <span>
+            03
+          </span>
+
+
+          <div>
+
+            <strong>
+              RoBERTa
+            </strong>
+
+
+            <small>
+              Transcript → Fake/Real prediction
+            </small>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         LOADING SECTION
+    ====================================================== -->
+
+    <section
+      id="loading"
+      class="loading hidden"
+      aria-live="polite"
+      aria-busy="true"
+    >
+
+      <div
+        class="spinner"
+        aria-hidden="true"
+      ></div>
+
+
+      <p id="loadingText">
+        Analyzing content...
+      </p>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         ERROR SECTION
+    ====================================================== -->
+
+    <section
+      id="error"
+      class="error hidden"
+      role="alert"
+      aria-live="assertive"
+    >
+
+      <strong>
+        Analysis failed
+      </strong>
+
+
+      <p id="errorText">
+        —
+      </p>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         RESULT SECTION
+    ====================================================== -->
+
+    <section
+      id="result"
+      class="result hidden"
+      aria-live="polite"
+    >
+
+
+      <!-- ===================================================
+           RESULT HEADER
+      ==================================================== -->
+
+      <div class="result-header">
+
+        <div class="section-label">
+          ANALYSIS COMPLETE
+        </div>
+
+
+        <div class="success">
+          SUCCESS
+        </div>
+
+      </div>
+
+
+
+      <!-- ===================================================
+           FINAL PREDICTION
+      ==================================================== -->
+
+      <div
+        id="predictionBox"
+        class="prediction-box"
+      >
+
+        <span class="prediction-label">
+          FINAL PREDICTION
+        </span>
+
+
+        <strong id="prediction">
+          —
+        </strong>
+
+
+        <span id="confidence">
+          —
+        </span>
+
+      </div>
+
+
+
+      <!-- ===================================================
+           BASIC METRICS
+      ==================================================== -->
+
+      <div class="metrics">
+
+
+        <!-- MODALITY -->
+
+        <div class="metric">
+
+          <span>
+            Modality
+          </span>
+
+
+          <strong id="modality">
+            —
+          </strong>
+
+        </div>
+
+
+
+        <!-- MODEL -->
+
+        <div class="metric">
+
+          <span>
+            Model
+          </span>
+
+
+          <strong id="model">
+            —
+          </strong>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- =================================================
+           IMAGE RESULT DETAILS
+      ================================================== -->
+
+      <div
+        id="imageDetails"
+        class="image-result-details hidden"
+      >
+
+
+        <!-- ANALYSIS CASE -->
+
+        <div class="detail-row">
+
+          <span>
+            Analysis Case
+          </span>
+
+
+          <strong id="analysisCase">
+            —
+          </strong>
+
+        </div>
+
+
+
+        <!-- FUSION METHOD -->
+
+        <div
+          id="fusionMethodRow"
+          class="detail-row hidden"
+        >
+
+          <span>
+            Fusion Method
+          </span>
+
+
+          <strong id="fusionMethod">
+            —
+          </strong>
+
+        </div>
+
+
+
+        <!-- OCR TEXT -->
+
+        <div
+          id="ocrTextRow"
+          class="detail-row hidden"
+        >
+
+          <span>
+            OCR Text
+          </span>
+
+
+          <p id="ocrText">
+            —
+          </p>
+
+        </div>
+
+
+
+        <!-- TEXT MODEL RESULT -->
+
+        <div
+          id="textModelRow"
+          class="detail-row hidden"
+        >
+
+          <span>
+            Text Model
+          </span>
+
+
+          <strong id="textModelPrediction">
+            —
+          </strong>
+
+
+          <small id="textModelConfidence">
+            —
+          </small>
+
+        </div>
+
+
+
+        <!-- VISUAL MODEL RESULT -->
+
+        <div
+          id="visualModelRow"
+          class="detail-row hidden"
+        >
+
+          <span>
+            Visual Model
+          </span>
+
+
+          <strong id="visualModelPrediction">
+            —
+          </strong>
+
+
+          <small id="visualModelConfidence">
+            —
+          </small>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- =================================================
+           AUDIO RESULT DETAILS
+      ================================================== -->
+
+      <div
+        id="audioDetails"
+        class="audio-result-details hidden"
+      >
+
+
+        <!-- TRANSCRIPTION MODEL -->
+
+        <div
+          id="transcriptionModelRow"
+          class="detail-row hidden"
+        >
+
+          <span>
+            Transcription Model
+          </span>
+
+
+          <strong id="transcriptionModel">
+            —
+          </strong>
+
+        </div>
+
+
+
+        <!-- LANGUAGE -->
+
+        <div
+          id="languageRow"
+          class="detail-row hidden"
+        >
+
+          <span>
+            Language
+          </span>
+
+
+          <strong id="audioLanguage">
+            —
+          </strong>
+
+        </div>
+
+
+
+        <!-- TRANSCRIPT -->
+
+        <div
+          id="transcriptRow"
+          class="detail-row hidden"
+        >
+
+          <span>
+            Transcript
+          </span>
+
+
+          <p id="audioTranscript">
+            —
+          </p>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- =================================================
+           PROBABILITY DISTRIBUTION
+      ================================================== -->
+
+      <div
+        id="probabilities"
+        class="probabilities"
+      >
+
+        <div class="section-label">
+          PROBABILITIES
+        </div>
+
+
+        <div
+          id="probabilityList"
+          class="probability-list"
+        ></div>
+
+      </div>
+
+
+
+      <!-- =================================================
+           VERIFICATION / RELATED SOURCES
+      ================================================== -->
+
+      <div
+        id="sourcesSection"
+        class="sources hidden"
+      >
+
+        <div class="section-label">
+          RELATED SOURCES
+        </div>
+
+
+        <p class="sources-help">
+          Sources related to the verification result.
+        </p>
+
+
+        <div
+          id="sourcesList"
+          class="source-list"
+        ></div>
+
+      </div>
+
+
+    </section>
+
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <footer class="footer">
+
+      <span>
+        Multimodal Fake Content Detection
+      </span>
+
+
+      <span>
+        v1.0
+      </span>
+
+    </footer>
+
+
+  </div>
+
+
+
+  <!-- =======================================================
+       JAVASCRIPT
+  ======================================================== -->
+
+  <script src="popup.js"></script>
+
+
+</body>
+
+</html>
