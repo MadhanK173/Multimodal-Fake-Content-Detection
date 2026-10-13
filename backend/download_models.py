@@ -32,7 +32,7 @@ PROJECT_ROOT = BACKEND_DIR.parent
 ML_MODELS_DIR = PROJECT_ROOT / "ml-models"
 
 # IMPORTANT:
-# Text inference now uses the lightweight INT8 ONNX model.
+# Text inference uses the lightweight INT8 ONNX model.
 TEXT_MODEL_DIR = (
     ML_MODELS_DIR
     / "text"
@@ -116,21 +116,6 @@ download_file(
     TEXT_MODEL_DIR / "tokenizer_config.json"
 )
 
-download_file(
-    "special_tokens_map.json",
-    TEXT_MODEL_DIR / "special_tokens_map.json"
-)
-
-download_file(
-    "vocab.json",
-    TEXT_MODEL_DIR / "vocab.json"
-)
-
-download_file(
-    "merges.txt",
-    TEXT_MODEL_DIR / "merges.txt"
-)
-
 
 # ============================================================
 # DOWNLOAD RESNET50
@@ -153,9 +138,6 @@ required_files = [
     TEXT_MODEL_DIR / "config.json",
     TEXT_MODEL_DIR / "tokenizer.json",
     TEXT_MODEL_DIR / "tokenizer_config.json",
-    TEXT_MODEL_DIR / "special_tokens_map.json",
-    TEXT_MODEL_DIR / "vocab.json",
-    TEXT_MODEL_DIR / "merges.txt",
 
     # ResNet50
     IMAGE_MODEL_DIR / "resnet50_best.pth",
