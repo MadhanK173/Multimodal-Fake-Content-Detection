@@ -212,7 +212,7 @@ class UnifiedMultimodalInferenceEngine:
 
                 / "text"
 
-                / "roberta_base_final_RECOVERED"
+                / "roberta_base_onnx"
 
             )
 

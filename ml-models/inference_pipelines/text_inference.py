@@ -1,6 +1,9 @@
 import os
-import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from typing import Any, Dict
+
+import numpy as np
+import onnxruntime as ort
+from transformers import AutoTokenizer
 
 
 class TextInferenceEngine:
@@ -12,7 +15,17 @@ class TextInferenceEngine:
         device=None
     ):
 
-        # Automatically locate project root
+        # ---------------------------------------------------------
+        # Locate project root
+        #
+        # Current file:
+        # project/
+        #   ml-models/
+        #     inference_pipelines/
+        #       text_inference.py
+        #
+        # Therefore project root = two levels above this file.
+        # ---------------------------------------------------------
         if model_path is None:
 
             current_dir = os.path.dirname(
@@ -31,111 +44,135 @@ class TextInferenceEngine:
                 project_root,
                 "ml-models",
                 "text",
-                "roberta_base_final_RECOVERED"
+                "roberta_base_onnx"
             )
 
-
-        # Normalize path
         self.model_path = os.path.abspath(
             model_path
         )
 
         self.max_length = max_length
 
-
+        # ---------------------------------------------------------
         # Validate model directory
-        if not os.path.exists(
-            self.model_path
-        ):
+        # ---------------------------------------------------------
+        if not os.path.exists(self.model_path):
 
             raise FileNotFoundError(
-                f"Text model directory not found:\n"
+                f"ONNX text model directory not found:\n"
                 f"{self.model_path}"
             )
 
-
-        print(
-            f"Loading RoBERTa model from:\n"
-            f"{self.model_path}"
+        self.onnx_model_path = os.path.join(
+            self.model_path,
+            "model_int8.onnx"
         )
 
+        if not os.path.exists(
+            self.onnx_model_path
+        ):
 
-        # Device selection
-        if device is None:
-
-            self.device = torch.device(
-                "cuda"
-                if torch.cuda.is_available()
-                else "cpu"
+            raise FileNotFoundError(
+                f"INT8 ONNX model not found:\n"
+                f"{self.onnx_model_path}"
             )
-
-        else:
-
-            self.device = torch.device(
-                device
-            )
-
 
         print(
-            f"Using device: {self.device}"
+            "Loading INT8 RoBERTa ONNX model from:"
         )
 
+        print(
+            self.onnx_model_path
+        )
 
+        # ---------------------------------------------------------
+        # CPU execution
+        # ---------------------------------------------------------
+        self.device = "cpu"
+
+        print(
+            "Using device: cpu (ONNX Runtime)"
+        )
+
+        # ---------------------------------------------------------
         # Load tokenizer
+        # ---------------------------------------------------------
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model_path,
             local_files_only=True
         )
 
+        # ---------------------------------------------------------
+        # ONNX Runtime session
+        #
+        # Keep thread count low for Render Free.
+        # ---------------------------------------------------------
+        session_options = ort.SessionOptions()
 
-        # Load model
-        self.model = AutoModelForSequenceClassification.from_pretrained(
-            self.model_path,
-            local_files_only=True
+        session_options.intra_op_num_threads = 1
+        session_options.inter_op_num_threads = 1
+
+        self.session = ort.InferenceSession(
+            self.onnx_model_path,
+            sess_options=session_options,
+            providers=[
+                "CPUExecutionProvider"
+            ]
         )
 
-
-        self.model.to(
-            self.device
-        )
-
-        self.model.eval()
-
-
-        # Label mapping
-        self.id_to_label = {
-
-            idx: str(
-                self.model.config.id2label.get(
-                    idx,
-                    str(idx)
-                )
-            ).lower()
-
-            for idx in range(
-                self.model.config.num_labels
-            )
-
+        # ---------------------------------------------------------
+        # Get model input/output names
+        # ---------------------------------------------------------
+        self.input_names = {
+            input_info.name
+            for input_info
+            in self.session.get_inputs()
         }
 
+        self.output_names = [
+            output_info.name
+            for output_info
+            in self.session.get_outputs()
+        ]
+
+        # ---------------------------------------------------------
+        # Fixed mapping from the trained model
+        #
+        # Class 0 = REAL
+        # Class 1 = FAKE
+        # ---------------------------------------------------------
+        self.id_to_label = {
+            0: "real",
+            1: "fake"
+        }
 
         print(
-            "RoBERTa model loaded successfully!"
+            "RoBERTa INT8 ONNX model loaded successfully!"
         )
 
+        print(
+            f"ONNX inputs: {sorted(self.input_names)}"
+        )
 
-    @torch.no_grad()
-    def predict(self, text):
+        print(
+            f"ONNX outputs: {self.output_names}"
+        )
 
+    def predict(
+        self,
+        text: str
+    ) -> Dict[str, Any]:
+
+        # ---------------------------------------------------------
+        # Validate input
+        # ---------------------------------------------------------
         if not isinstance(text, str):
 
             raise TypeError(
                 "Input must be a string."
             )
 
-
         text = text.strip()
-
 
         if not text:
 
@@ -143,63 +180,80 @@ class TextInferenceEngine:
                 "Input text cannot be empty."
             )
 
-
+        # ---------------------------------------------------------
         # Tokenize
-        inputs = self.tokenizer(
-
+        # ---------------------------------------------------------
+        encoded = self.tokenizer(
             text,
-
             max_length=self.max_length,
-
             truncation=True,
-
             padding=True,
-
-            return_tensors="pt"
-
+            return_tensors="np"
         )
 
+        # ---------------------------------------------------------
+        # Prepare ONNX inputs
+        # ---------------------------------------------------------
+        inputs = {}
 
-        inputs = {
+        for name in self.input_names:
 
-            key: value.to(
-                self.device
+            if name not in encoded:
+
+                raise RuntimeError(
+                    f"Required ONNX input '{name}' "
+                    f"was not produced by the tokenizer."
+                )
+
+            inputs[name] = encoded[
+                name
+            ].astype(
+                np.int64
             )
 
-            for key, value
-            in inputs.items()
-
-        }
-
-
+        # ---------------------------------------------------------
         # Inference
-        outputs = self.model(
-            **inputs
+        # ---------------------------------------------------------
+        outputs = self.session.run(
+            self.output_names,
+            inputs
         )
 
-
-        probabilities = torch.softmax(
-
-            outputs.logits,
-
-            dim=1
-
+        logits = np.asarray(
+            outputs[0],
+            dtype=np.float32
         )[0]
 
-
-        predicted_index = int(
-            torch.argmax(
-                probabilities
-            ).item()
+        # ---------------------------------------------------------
+        # Softmax
+        # ---------------------------------------------------------
+        shifted_logits = (
+            logits - np.max(logits)
         )
 
+        exp_logits = np.exp(
+            shifted_logits
+        )
+
+        probabilities = (
+            exp_logits /
+            np.sum(exp_logits)
+        )
+
+        # ---------------------------------------------------------
+        # Prediction
+        # ---------------------------------------------------------
+        predicted_index = int(
+            np.argmax(
+                probabilities
+            )
+        )
 
         confidence = float(
             probabilities[
                 predicted_index
-            ].item()
+            ]
         )
-
 
         probability_dict = {
 
@@ -207,23 +261,23 @@ class TextInferenceEngine:
                 index,
                 str(index)
             ): float(
-                probability.item()
+                probability
             )
 
             for index, probability
             in enumerate(
                 probabilities
             )
-
         }
-
 
         prediction = self.id_to_label.get(
             predicted_index,
             str(predicted_index)
         )
 
-
+        # ---------------------------------------------------------
+        # Preserve existing API response format
+        # ---------------------------------------------------------
         return {
 
             "prediction": prediction,
@@ -250,5 +304,4 @@ class TextInferenceEngine:
             "model": "RoBERTa",
 
             "modality": "text"
-
         }

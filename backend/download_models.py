@@ -31,10 +31,12 @@ PROJECT_ROOT = BACKEND_DIR.parent
 
 ML_MODELS_DIR = PROJECT_ROOT / "ml-models"
 
+# IMPORTANT:
+# Text inference now uses the lightweight INT8 ONNX model.
 TEXT_MODEL_DIR = (
     ML_MODELS_DIR
     / "text"
-    / "roberta_base_final_RECOVERED"
+    / "roberta_base_onnx"
 )
 
 IMAGE_MODEL_DIR = (
@@ -89,17 +91,19 @@ def download_file(
 
 
 # ============================================================
-# DOWNLOAD ROBERTA
+# DOWNLOAD ROBERTA INT8 ONNX MODEL
 # ============================================================
 
+# Main INT8 model (~125 MB)
+download_file(
+    "model_int8.onnx",
+    TEXT_MODEL_DIR / "model_int8.onnx"
+)
+
+# Tokenizer/config files required by AutoTokenizer
 download_file(
     "config.json",
     TEXT_MODEL_DIR / "config.json"
-)
-
-download_file(
-    "model.safetensors",
-    TEXT_MODEL_DIR / "model.safetensors"
 )
 
 download_file(
@@ -110,6 +114,21 @@ download_file(
 download_file(
     "tokenizer_config.json",
     TEXT_MODEL_DIR / "tokenizer_config.json"
+)
+
+download_file(
+    "special_tokens_map.json",
+    TEXT_MODEL_DIR / "special_tokens_map.json"
+)
+
+download_file(
+    "vocab.json",
+    TEXT_MODEL_DIR / "vocab.json"
+)
+
+download_file(
+    "merges.txt",
+    TEXT_MODEL_DIR / "merges.txt"
 )
 
 
@@ -124,14 +143,21 @@ download_file(
 
 
 # ============================================================
-# VERIFY
+# VERIFY REQUIRED FILES
 # ============================================================
 
 required_files = [
+
+    # INT8 RoBERTa
+    TEXT_MODEL_DIR / "model_int8.onnx",
     TEXT_MODEL_DIR / "config.json",
-    TEXT_MODEL_DIR / "model.safetensors",
     TEXT_MODEL_DIR / "tokenizer.json",
     TEXT_MODEL_DIR / "tokenizer_config.json",
+    TEXT_MODEL_DIR / "special_tokens_map.json",
+    TEXT_MODEL_DIR / "vocab.json",
+    TEXT_MODEL_DIR / "merges.txt",
+
+    # ResNet50
     IMAGE_MODEL_DIR / "resnet50_best.pth",
 ]
 
@@ -139,6 +165,7 @@ required_files = [
 for file_path in required_files:
 
     if not file_path.is_file():
+
         raise FileNotFoundError(
             f"Required model file missing: {file_path}"
         )
