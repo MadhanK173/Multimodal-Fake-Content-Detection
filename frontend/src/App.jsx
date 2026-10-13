@@ -2067,485 +2067,6 @@ function App() {
 >
 
         {/* ====================================================
-            PLUGIN MANAGEMENT
-        ===================================================== */}
-
-        <section
-          style={{
-            order: 99,
-            marginTop: '28px',
-            marginBottom: '0',
-            padding: '22px 24px',
-            border: '1px solid #e5eaf2',
-            borderRadius: '20px',
-            background: '#ffffff',
-            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.06)',
-          }}
-        >
-
-          {/* ==================================================
-              PLUGIN MANAGEMENT HEADER
-          =================================================== */}
-
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: '16px',
-              marginBottom: '18px',
-            }}
-          >
-
-            <div>
-
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: '#64748b',
-                }}
-              >
-                Plugin Architecture
-              </p>
-
-              <h2
-                style={{
-                  margin: '5px 0 0',
-                  fontSize: '22px',
-                  color: '#0f172a',
-                }}
-              >
-                Active Plugins
-              </h2>
-
-            </div>
-
-            <span
-              style={{
-                padding: '7px 12px',
-                borderRadius: '999px',
-                background: '#ecfdf5',
-                color: '#047857',
-                fontSize: '12px',
-                fontWeight: 700,
-              }}
-            >
-              {pluginLoading
-                ? 'LOADING'
-                : `${plugins.length} ACTIVE`}
-            </span>
-
-          </div>
-
-          {/* ==================================================
-              PLUGIN LIST ERROR
-          =================================================== */}
-
-          {pluginError && (
-            <div
-              style={{
-                padding: '12px 14px',
-                borderRadius: '12px',
-                background: '#fef2f2',
-                color: '#b91c1c',
-                fontSize: '14px',
-              }}
-            >
-              {pluginError}
-            </div>
-          )}
-
-          {/* ==================================================
-              PLUGIN LOADING
-          =================================================== */}
-
-          {pluginLoading && !pluginError && (
-            <div
-              style={{
-                padding: '14px',
-                borderRadius: '12px',
-                background: '#f8fafc',
-                color: '#64748b',
-                fontSize: '14px',
-              }}
-            >
-              Loading registered plugins...
-            </div>
-          )}
-
-          {/* ==================================================
-              PLUGIN CARDS
-          =================================================== */}
-
-          {!pluginLoading &&
-            !pluginError &&
-            plugins.length > 0 && (
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns:
-                    'repeat(auto-fit, minmax(180px, 1fr))',
-                  gap: '12px',
-                }}
-              >
-
-                {plugins.map((plugin) => (
-
-                  <button
-                    key={plugin.name}
-                    type="button"
-                    onClick={() =>
-                      loadPluginDetails(plugin.name)
-                    }
-                    style={{
-                      textAlign: 'left',
-                      padding: '15px',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '14px',
-                      background: '#f8fafc',
-                      cursor: 'pointer',
-                    }}
-                  >
-
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        gap: '8px',
-                        marginBottom: '10px',
-                      }}
-                    >
-
-                      <strong
-                        style={{
-                          color: '#0f172a',
-                          fontSize: '14px',
-                        }}
-                      >
-                        {plugin.class}
-                      </strong>
-
-                      <span
-                        style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          background: '#22c55e',
-                          flex: '0 0 auto',
-                        }}
-                      />
-
-                    </div>
-
-                    <span
-                      style={{
-                        display: 'block',
-                        color: '#64748b',
-                        fontSize: '12px',
-                      }}
-                    >
-                      Modality: {plugin.modality}
-                    </span>
-
-                    <span
-                      style={{
-                        display: 'block',
-                        marginTop: '5px',
-                        color: '#047857',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      {plugin.status}
-                    </span>
-
-                  </button>
-
-                ))}
-
-              </div>
-
-            )}
-
-          {/* ==================================================
-              NO PLUGINS
-          =================================================== */}
-
-          {!pluginLoading &&
-            !pluginError &&
-            plugins.length === 0 && (
-
-              <div
-                style={{
-                  padding: '14px',
-                  borderRadius: '12px',
-                  background: '#f8fafc',
-                  color: '#64748b',
-                  fontSize: '14px',
-                }}
-              >
-                No plugins are currently registered.
-              </div>
-
-            )}
-
-          {/* ==================================================
-              SELECTED PLUGIN DETAILS
-          =================================================== */}
-
-          {selectedPluginLoading && (
-
-            <div
-              style={{
-                marginTop: '16px',
-                padding: '14px',
-                borderRadius: '12px',
-                background: '#eff6ff',
-                color: '#1d4ed8',
-                fontSize: '14px',
-              }}
-            >
-              Loading plugin details...
-            </div>
-
-          )}
-
-          {selectedPluginError && (
-
-            <div
-              style={{
-                marginTop: '16px',
-                padding: '14px',
-                borderRadius: '12px',
-                background: '#fef2f2',
-                color: '#b91c1c',
-                fontSize: '14px',
-              }}
-            >
-              {selectedPluginError}
-            </div>
-
-          )}
-
-          {selectedPlugin && !selectedPluginLoading && (
-
-            <div
-              style={{
-                marginTop: '16px',
-                padding: '16px',
-                borderRadius: '14px',
-                background: '#eff6ff',
-                border: '1px solid #dbeafe',
-              }}
-            >
-
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: '12px',
-                  marginBottom: '14px',
-                }}
-              >
-
-                <div>
-
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: '11px',
-                      color: '#64748b',
-                      textTransform: 'uppercase',
-                      fontWeight: 700,
-                    }}
-                  >
-                    Selected Plugin
-                  </p>
-
-                  <h3
-                    style={{
-                      margin: '4px 0 0',
-                      color: '#0f172a',
-                      fontSize: '18px',
-                    }}
-                  >
-                    {selectedPlugin.name}
-                  </h3>
-
-                </div>
-
-                <span
-                  style={{
-                    padding: '6px 10px',
-                    borderRadius: '999px',
-                    background: '#dcfce7',
-                    color: '#166534',
-                    fontSize: '11px',
-                    fontWeight: 800,
-                  }}
-                >
-                  ACTIVE
-                </span>
-
-              </div>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns:
-                    'repeat(auto-fit, minmax(150px, 1fr))',
-                  gap: '10px',
-                }}
-              >
-
-                <div
-                  style={{
-                    padding: '12px',
-                    borderRadius: '10px',
-                    background: '#ffffff',
-                    border: '1px solid #dbeafe',
-                  }}
-                >
-
-                  <span
-                    style={{
-                      display: 'block',
-                      fontSize: '11px',
-                      color: '#64748b',
-                      textTransform: 'uppercase',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    Modality
-                  </span>
-
-                  <strong
-                    style={{
-                      fontSize: '14px',
-                      color: '#0f172a',
-                    }}
-                  >
-                    {selectedPlugin.modality}
-                  </strong>
-
-                </div>
-
-                <div
-                  style={{
-                    padding: '12px',
-                    borderRadius: '10px',
-                    background: '#ffffff',
-                    border: '1px solid #dbeafe',
-                  }}
-                >
-
-                  <span
-                    style={{
-                      display: 'block',
-                      fontSize: '11px',
-                      color: '#64748b',
-                      textTransform: 'uppercase',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    Class
-                  </span>
-
-                  <strong
-                    style={{
-                      fontSize: '14px',
-                      color: '#0f172a',
-                    }}
-                  >
-                    {selectedPlugin.class}
-                  </strong>
-
-                </div>
-
-                <div
-                  style={{
-                    padding: '12px',
-                    borderRadius: '10px',
-                    background: '#ffffff',
-                    border: '1px solid #dbeafe',
-                  }}
-                >
-
-                  <span
-                    style={{
-                      display: 'block',
-                      fontSize: '11px',
-                      color: '#64748b',
-                      textTransform: 'uppercase',
-                      marginBottom: '4px',
-                    }}
-                  >
-                    Status
-                  </span>
-
-                  <strong
-                    style={{
-                      fontSize: '14px',
-                      color: '#047857',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {selectedPlugin.status}
-                  </strong>
-
-                </div>
-
-              </div>
-
-              <div
-                style={{
-                  marginTop: '14px',
-                  padding: '12px 14px',
-                  borderRadius: '10px',
-                  background: '#ffffff',
-                  border: '1px solid #dbeafe',
-                }}
-              >
-
-                <span
-                  style={{
-                    display: 'block',
-                    fontSize: '11px',
-                    color: '#64748b',
-                    textTransform: 'uppercase',
-                    marginBottom: '4px',
-                  }}
-                >
-                  Plugin API
-                </span>
-
-                <code
-                  style={{
-                    fontSize: '13px',
-                    color: '#1d4ed8',
-                    wordBreak: 'break-all',
-                  }}
-                >
-                  GET /api/v1/plugins/{selectedPlugin.name}
-                </code>
-
-              </div>
-
-            </div>
-
-          )}
-
-        </section>
-
-        {/* ====================================================
             HERO
         ===================================================== */}
 
@@ -2699,16 +2220,62 @@ function App() {
 
             </div>
 
-            <div className="model-pill">
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-end',
+                gap: '10px',
+              }}
+            >
 
-              {activeMode === MODES.TEXT &&
-                'RoBERTa'}
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  border: '1px solid #e5eaf2',
+                  borderRadius: '999px',
+                  background: '#ffffff',
+                  color: '#475569',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  whiteSpace: 'nowrap',
+                }}
+              >
 
-              {activeMode === MODES.IMAGE &&
-                'OCR + ResNet50'}
+                <span
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: pluginError
+                      ? '#ef4444'
+                      : '#22c55e',
+                    boxShadow: pluginError
+                      ? '0 0 0 4px rgba(239, 68, 68, 0.10)'
+                      : '0 0 0 4px rgba(34, 197, 94, 0.10)',
+                    flex: '0 0 auto',
+                  }}
+                />
 
-              {activeMode === MODES.AUDIO &&
-                'Whisper + RoBERTa'}
+                Active Plugins
+
+              </div>
+
+              <div className="model-pill">
+
+                {activeMode === MODES.TEXT &&
+                  'RoBERTa'}
+
+                {activeMode === MODES.IMAGE &&
+                  'OCR + ResNet50'}
+
+                {activeMode === MODES.AUDIO &&
+                  'Whisper + RoBERTa'}
+
+              </div>
 
             </div>
 
