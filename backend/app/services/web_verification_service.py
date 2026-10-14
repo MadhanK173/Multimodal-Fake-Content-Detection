@@ -283,11 +283,7 @@ class WebVerificationService:
 
         )
 
-        self.timeout = self._safe_int(
-
-            os.getenv("TAVILY_TIMEOUT", "20"), 20, 5, 60
-
-        )
+        self.timeout = 5
 
 
 
@@ -339,7 +335,7 @@ class WebVerificationService:
 
 
 
-        for query in queries:
+        for query in queries[:1]:
 
             try:
 
@@ -2323,7 +2319,7 @@ class WebVerificationService:
 
         ranked_candidates = self._rank_evidence_sources(candidates)
 
-        for rank, result in enumerate(ranked_candidates, start=1):
+        for rank, result in enumerate(ranked_candidates[:4], start=1):
             source_url = str(
                 result.get("url") or ""
             ).strip()
@@ -2407,7 +2403,7 @@ class WebVerificationService:
         try:
             response = requests.get(
                 url,
-                timeout=15,
+                timeout=3,
                 allow_redirects=True,
                 headers={
                     "User-Agent": (
