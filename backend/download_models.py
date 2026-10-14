@@ -1,25 +1,27 @@
 import os
-import shutil
 from pathlib import Path
 
+from dotenv import load_dotenv
 from huggingface_hub import hf_hub_download
 
 
 # ============================================================
-# CONFIGURATION
+# LOAD ENVIRONMENT
 # ============================================================
 
-REPO_ID = os.getenv(
+load_dotenv()
+
+
+# ============================================================
+# HUGGING FACE CONFIGURATION
+# ============================================================
+
+HF_MODEL_REPO = os.getenv(
     "HF_MODEL_REPO",
     "madhan1705/multimodal-fake-content-models"
 )
 
 HF_TOKEN = os.getenv("HF_TOKEN")
-
-if not HF_TOKEN:
-    raise RuntimeError(
-        "HF_TOKEN environment variable is not configured."
-    )
 
 
 # ============================================================
@@ -27,17 +29,29 @@ if not HF_TOKEN:
 # ============================================================
 
 BACKEND_DIR = Path(__file__).resolve().parent
+
 PROJECT_ROOT = BACKEND_DIR.parent
 
-ML_MODELS_DIR = PROJECT_ROOT / "ml-models"
+ML_MODELS_DIR = (
+    PROJECT_ROOT
+    / "ml-models"
+)
 
-# IMPORTANT:
-# Text inference uses the lightweight INT8 ONNX model.
+
+# ============================================================
+# TEXT MODEL
+# ============================================================
+
 TEXT_MODEL_DIR = (
     ML_MODELS_DIR
     / "text"
     / "roberta_base_onnx"
 )
+
+
+# ============================================================
+# IMAGE MODEL
+# ============================================================
 
 IMAGE_MODEL_DIR = (
     ML_MODELS_DIR
@@ -61,32 +75,59 @@ IMAGE_MODEL_DIR.mkdir(
 
 
 # ============================================================
-# FILE DOWNLOAD HELPER
+# DOWNLOAD FUNCTION
 # ============================================================
 
 def download_file(
     filename: str,
     destination: Path
-) -> None:
+):
+    """
+    Download one model file from Hugging Face
+    and copy it to the required project location.
+    """
 
     print(
-        f"Downloading {filename}..."
+        f"\nDownloading {filename}..."
     )
 
     downloaded_path = hf_hub_download(
-        repo_id=REPO_ID,
+        repo_id=HF_MODEL_REPO,
         filename=filename,
-        repo_type="model",
-        token=HF_TOKEN,
+        token=HF_TOKEN
     )
 
-    shutil.copy2(
-        downloaded_path,
-        destination
+    destination.parent.mkdir(
+        parents=True,
+        exist_ok=True
     )
+
+    # Copy downloaded file to project model directory.
+    with open(
+        downloaded_path,
+        "rb"
+    ) as source_file:
+
+        with open(
+            destination,
+            "wb"
+        ) as destination_file:
+
+            while True:
+
+                chunk = source_file.read(
+                    1024 * 1024
+                )
+
+                if not chunk:
+                    break
+
+                destination_file.write(
+                    chunk
+                )
 
     print(
-        f"Saved to: {destination}"
+        f"Downloaded successfully: {destination}"
     )
 
 
@@ -94,13 +135,16 @@ def download_file(
 # DOWNLOAD ROBERTA INT8 ONNX MODEL
 # ============================================================
 
-# Main INT8 model (~125 MB)
 download_file(
     "model_int8.onnx",
     TEXT_MODEL_DIR / "model_int8.onnx"
 )
 
-# Tokenizer/config files required by AutoTokenizer
+
+# ============================================================
+# DOWNLOAD TOKENIZER / CONFIG FILES
+# ============================================================
+
 download_file(
     "config.json",
     TEXT_MODEL_DIR / "config.json"
@@ -144,6 +188,20 @@ required_files = [
 ]
 
 
+print(
+    "\n"
+    + "=" * 80
+)
+
+print(
+    "VERIFYING DOWNLOADED MODEL FILES"
+)
+
+print(
+    "=" * 80
+)
+
+
 for file_path in required_files:
 
     if not file_path.is_file():
@@ -152,8 +210,23 @@ for file_path in required_files:
             f"Required model file missing: {file_path}"
         )
 
+    file_size = file_path.stat().st_size
 
-print()
-print("=" * 60)
-print("ALL MODEL FILES ARE READY")
-print("=" * 60)
+    print(
+        f"OK: {file_path} "
+        f"({file_size:,} bytes)"
+    )
+
+
+print(
+    "\n"
+    + "=" * 80
+)
+
+print(
+    "ALL MODEL FILES ARE READY"
+)
+
+print(
+    "=" * 80
+)

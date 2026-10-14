@@ -49,3 +49,6 @@ tmp/
 
 # Windows shortcut files
 *.lnk
+
+# Local downloaded ONNX models
+ml-models/text/roberta_base_onnx/

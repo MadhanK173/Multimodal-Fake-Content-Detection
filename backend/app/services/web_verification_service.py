@@ -636,49 +636,38 @@ class WebVerificationService:
         ]
 
         # ============================================================
-        # SELECT EXACTLY ONE BEST SOURCE
+        # BEST-SOURCE EVIDENCE INSPECTION
+        # ============================================================
+        #
+        # IMPORTANT CONTRACT:
+        # The same best-source strategy is used for REAL and FAKE claims.
+        # We first rank the complete six-source pool. The highest-ranked
+        # source is inspected first. A source is accepted ONLY when its
+        # actual webpage can be retrieved AND a claim-relevant passage can
+        # be extracted from that webpage. If either step fails, we continue
+        # to the next-ranked source.
+        #
+        # The final web verdict does not decide which source is inspected.
+        # Supporting, contradicting, and relevant sources use the same
+        # ranking rule. This keeps the REAL and FAKE evidence behavior
+        # identical.
         # ============================================================
 
-        best_evidence_source = self._get_accessible_evidence_source(
-            final_six_candidates
+        (
+            best_evidence_source,
+            web_explanation,
+            evidence_source_url,
+            source_evidence_extracted,
+        ) = self._find_best_inspectable_evidence_source(
+            claim,
+            final_six_candidates,
         )
 
-        # ============================================================
-        # EVIDENCE ANALYSIS FROM THE ACTUAL SELECTED SOURCE PAGE
-        # ============================================================
-
-        web_explanation = ""
-        evidence_source_url = ""
-        source_evidence_extracted = False
-
-        if best_evidence_source:
-
-            evidence_source_url = str(
-                best_evidence_source.get("url") or ""
-            ).strip()
-
-            selected_source_content = str(
-                best_evidence_source.get(
-                    "_source_page_content"
-                ) or ""
-            ).strip()
-
-            if selected_source_content:
-
-                web_explanation = self._extract_source_evidence(
-                    claim,
-                    selected_source_content,
-                )
-
-                if web_explanation:
-                    source_evidence_extracted = True
-
         if not web_explanation:
-
             web_explanation = (
-                "The selected source was identified as the strongest "
-                "matching source, but its webpage content could not be "
-                "retrieved for direct evidence extraction."
+                "Live web sources were found, but none of the inspected "
+                "source pages contained a sufficiently direct passage "
+                "for evidence extraction."
             )
 
         return {
@@ -703,6 +692,28 @@ class WebVerificationService:
                 "source_evidence"
                 if source_evidence_extracted
                 else "source_unavailable"
+            ),
+
+            # Exact source whose webpage produced the displayed evidence.
+            # Raw webpage content is intentionally never returned.
+            "evidence_source_title": (
+                str(best_evidence_source.get("title") or "").strip()
+                if best_evidence_source
+                else ""
+            ),
+
+            "evidence_source_url": evidence_source_url,
+
+            "evidence_source_domain": (
+                str(best_evidence_source.get("domain") or "").strip()
+                if best_evidence_source
+                else ""
+            ),
+
+            "evidence_source_rank": (
+                best_evidence_source.get("_evidence_rank")
+                if best_evidence_source
+                else None
             ),
 
 
@@ -2188,21 +2199,20 @@ class WebVerificationService:
 
         }
 
-    def _select_best_evidence_source(
+    def _rank_evidence_sources(
         self,
         candidates: List[Dict[str, Any]],
-    ) -> Optional[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]]:
         """
-        Select exactly ONE strongest source from the maximum-six
-        consideration pool.
+        Rank the complete source pool from strongest to weakest.
 
-        Exact supporting or contradicting evidence is prioritized.
-        Relevance, available Tavily source content, direct evidence,
-        and domain credibility are used as additional signals.
+        This is the single ranking used for both REAL and FAKE evidence
+        inspection. Direct supporting and direct contradicting evidence are
+        treated equally; the final verdict is determined separately.
         """
 
         if not candidates:
-            return None
+            return []
 
         scored_candidates: List[Tuple[float, float, Dict[str, Any]]] = []
 
@@ -2264,9 +2274,6 @@ class WebVerificationService:
                 )
             )
 
-        if not scored_candidates:
-            return None
-
         scored_candidates.sort(
             key=lambda item: (
                 item[0],
@@ -2275,121 +2282,109 @@ class WebVerificationService:
             reverse=True,
         )
 
-        return scored_candidates[0][2]
+        return [item[2] for item in scored_candidates]
 
-    def _get_accessible_evidence_source(
+    def _select_best_evidence_source(
         self,
         candidates: List[Dict[str, Any]],
     ) -> Optional[Dict[str, Any]]:
-        """
-        From the maximum-six candidate sources, rank the candidates and
-        return the first source whose actual webpage can be successfully
-        retrieved.
+        """Return the highest-ranked source without opening its URL.
 
-        The source is selected using evidence strength, relevance,
-        direct evidence availability, and domain credibility. If the
-        highest-ranked source is blocked (for example, HTTP 403), the
-        next-ranked candidate is tried.
+        Kept for compatibility with any existing internal caller. Actual
+        evidence generation must use ``_find_best_inspectable_evidence_source``
+        so that a source is not accepted merely because its URL responds.
+        """
+
+        ranked = self._rank_evidence_sources(candidates)
+        return ranked[0] if ranked else None
+
+    def _find_best_inspectable_evidence_source(
+        self,
+        claim: Dict[str, Any],
+        candidates: List[Dict[str, Any]],
+    ) -> Tuple[Optional[Dict[str, Any]], str, str, bool]:
+        """
+        Inspect the sources strictly from best to worst and return the first
+        source that produces real evidence from its actual webpage.
+
+        A source is accepted only when BOTH conditions are satisfied:
+
+        1. Its actual URL can be retrieved successfully.
+        2. The retrieved webpage contains a claim-relevant passage that
+           ``_extract_source_evidence`` can extract.
+
+        If the strongest source is blocked, empty, dynamically unusable, or
+        contains no relevant passage, the next-ranked source is inspected.
+        This behavior is identical for REAL and FAKE claims.
         """
 
         if not candidates:
-            return None
+            return None, "", "", False
 
-        scored_candidates: List[
-            Tuple[float, float, Dict[str, Any]]
-        ] = []
+        ranked_candidates = self._rank_evidence_sources(candidates)
 
-        for result in candidates:
-            if not isinstance(result, dict):
-                continue
-
-            evidence_type = str(
-                result.get("evidence_type") or ""
-            ).strip()
-
-            relevance = float(
-                result.get("relevance_score") or 0.0
-            )
-
-            domain = str(
-                result.get("domain") or ""
-            ).strip()
-
-            evidence_sentence = str(
-                result.get("_evidence_sentence") or ""
-            ).strip()
-
-            if evidence_type in {
-                "supports_exact_claim",
-                "contradicts_claim",
-            }:
-                evidence_strength = 0.60
-            elif evidence_type == "related_not_confirming":
-                evidence_strength = 0.20
-            else:
-                evidence_strength = 0.0
-
-            exact_sentence_bonus = (
-                0.20
-                if evidence_sentence
-                else 0.0
-            )
-
-            authority_bonus = (
-                0.08
-                if self._is_authoritative_source(domain)
-                else 0.0
-            )
-
-            selection_score = (
-                evidence_strength
-                + (relevance * 0.30)
-                + exact_sentence_bonus
-                + authority_bonus
-            )
-
-            scored_candidates.append(
-                (
-                    selection_score,
-                    relevance,
-                    result,
-                )
-            )
-
-        if not scored_candidates:
-            return None
-
-        scored_candidates.sort(
-            key=lambda item: (
-                item[0],
-                item[1],
-            ),
-            reverse=True,
-        )
-
-        # Try the ranked candidates one by one. The first page that can
-        # actually be retrieved becomes the single evidence source.
-        for _, _, result in scored_candidates:
-
+        for rank, result in enumerate(ranked_candidates, start=1):
             source_url = str(
                 result.get("url") or ""
+            ).strip()
+
+            source_title = str(
+                result.get("title") or ""
             ).strip()
 
             if not source_url:
                 continue
 
+            logger.info(
+                "Evidence inspection candidate #%s: %s (%s)",
+                rank,
+                source_title or source_url,
+                source_url,
+            )
+
             source_content = self._fetch_source_page_content(
                 source_url
             )
 
-            if source_content:
+            if not source_content:
+                logger.info(
+                    "Evidence inspection skipped candidate #%s because "
+                    "the webpage could not be retrieved: %s",
+                    rank,
+                    source_url,
+                )
+                continue
 
-                # Keep the actual webpage content internal only.
-                result["_source_page_content"] = source_content
+            evidence = self._extract_source_evidence(
+                claim,
+                source_content,
+            )
 
-                return result
+            if not evidence:
+                logger.info(
+                    "Evidence inspection skipped candidate #%s because "
+                    "no claim-relevant passage was found on the webpage: %s",
+                    rank,
+                    source_url,
+                )
+                continue
 
-        return None
+            # Raw webpage content stays server-side. Only the extracted
+            # evidence and public source metadata are returned.
+            result["_source_page_content"] = source_content
+            result["_selected_evidence"] = evidence
+            result["_evidence_rank"] = rank
+
+            logger.info(
+                "Selected evidence source #%s: %s (%s)",
+                rank,
+                source_title or source_url,
+                source_url,
+            )
+
+            return result, evidence, source_url, True
+
+        return None, "", "", False
 
     # ============================================================
     # ACTUAL SOURCE PAGE CONTENT
