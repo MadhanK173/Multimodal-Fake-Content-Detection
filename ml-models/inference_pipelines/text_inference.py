@@ -109,6 +109,16 @@ class TextInferenceEngine:
         # ---------------------------------------------------------
         session_options = ort.SessionOptions()
 
+        # Render Free has limited RAM. Prevent ONNX Runtime from
+        # creating large CPU memory arenas during model initialization.
+        session_options.enable_cpu_mem_arena = False
+        session_options.enable_mem_pattern = False
+        session_options.graph_optimization_level = (
+            ort.GraphOptimizationLevel.ORT_DISABLE_ALL
+        )
+        session_options.execution_mode = (
+            ort.ExecutionMode.ORT_SEQUENTIAL
+        )
         session_options.intra_op_num_threads = 1
         session_options.inter_op_num_threads = 1
 
